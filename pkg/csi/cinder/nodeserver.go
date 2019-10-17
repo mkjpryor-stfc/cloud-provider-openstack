@@ -357,7 +357,7 @@ func getDevicePath(volumeID string, m mount.IMount, req *csi.NodePublishVolumeRe
 	}
 	// As a last resort, use the path given by Cinder
 	if devicePath == "" {
-		devicePath = req.PublishContext.DevicePath
+		devicePath = req.PublishContext["DevicePath"]
 	}
 	klog.V(4).Infof("Found device path for volume: %s, %s", volumeID, devicePath)
 	return devicePath, nil
