@@ -117,7 +117,7 @@ func nodePublishVolumeForBlock(req *csi.NodePublishVolumeRequest, ns *nodeServer
 	m := ns.Mount
 
 	// Do not trust the path provided by cinder, get the real path on node
-	source, err := getDevicePath(volumeID, m, req)
+	source, err := getDevicePath(volumeID, m, req.GetPublishContext())
 	if source == "" {
 		return nil, status.Error(codes.Internal, "Unable to find Device path for volume")
 	}
@@ -211,7 +211,7 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 
 	m := ns.Mount
 	// Do not trust the path provided by cinder, get the real path on node
-	devicePath, err := getDevicePath(volumeID, m, req)
+	devicePath, err := getDevicePath(volumeID, m, req.GetPublishContext())
 	if devicePath == "" {
 		return nil, status.Error(codes.Internal, "Unable to find Device path for volume")
 	}
@@ -347,7 +347,7 @@ func (ns *nodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandV
 	return &csi.NodeExpandVolumeResponse{}, nil
 }
 
-func getDevicePath(volumeID string, m mount.IMount, req *csi.NodePublishVolumeRequest) (string, error) {
+func getDevicePath(volumeID string, m mount.IMount, publishContext map[string]string) (string, error) {
 	var devicePath string
 	// First, try to get the device path from /dev/disks/by-id
 	devicePath, _ = m.GetDevicePath(volumeID)
@@ -357,7 +357,7 @@ func getDevicePath(volumeID string, m mount.IMount, req *csi.NodePublishVolumeRe
 	}
 	// As a last resort, use the path given by Cinder
 	if devicePath == "" {
-		devicePath = req.PublishContext["DevicePath"]
+		devicePath = publishContext["DevicePath"]
 	}
 	klog.V(4).Infof("Found device path for volume: %s, %s", volumeID, devicePath)
 	return devicePath, nil
